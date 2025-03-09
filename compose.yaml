@@ -1,0 +1,28 @@
+﻿services:
+  underbeerpolls.api:
+    image: underbeerpolls.api
+    build:
+      context: .
+      dockerfile: UnderBeerPolls.Api/Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5433;Database=underbeerpolls;Username=admin;Password=admin
+    depends_on:
+      - postgres
+    ports:
+      - "5000:8080"
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: underbeerpolls
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
