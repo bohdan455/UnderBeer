@@ -2,6 +2,7 @@
 using UnderBeerPolls.DataLayer;
 using UnderBeerPolls.DataLayer.DbModels;
 using UnderBeerPolls.Services.Dtos;
+using UnderBeerPolls.Services.Exceptions;
 using UnderBeerPolls.Services.Services.Interfaces;
 
 namespace UnderBeerPolls.Services.Services;
@@ -9,10 +10,12 @@ namespace UnderBeerPolls.Services.Services;
 public class PollService : IPollService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IValidationService _validationService;
 
-    public PollService(ApplicationDbContext context)
+    public PollService(ApplicationDbContext context, IValidationService validationService)
     {
         _context = context;
+        _validationService = validationService;
     }
 
     public async Task CreatePoll(string username, Poll newPoll)
@@ -30,6 +33,11 @@ public class PollService : IPollService
             .Include(x => x.Responses).ThenInclude(x => x.PollOptionResponses).ThenInclude(x => x.PollOption)
             .FirstOrDefaultAsync(x => x.Id == pollId);
 
+        if (poll == null)
+        {
+            throw new InvalidPollException(pollId);
+        }
+        
         return poll;
     }
 
@@ -45,6 +53,11 @@ public class PollService : IPollService
             })
             .FirstOrDefaultAsync(x => x.Id == pollId);
 
+        if (poll == null)
+        {
+            throw new InvalidPollException(pollId);
+        }
+        
         return poll;
     }
 
@@ -69,6 +82,17 @@ public class PollService : IPollService
     // TODO Add validation that submitted value correspond to option type
     public async Task<bool> SubmitPoll(PollResponseDto pollResponseDto)
     {
+        var options = await _context.PollOptions
+            .Where(x => x.PollId == pollResponseDto.PollId)
+            .ToListAsync();
+
+        if (options.Count == 0)
+        {
+            throw new InvalidPollException(pollResponseDto.PollId);
+        }
+        
+        _validationService.ValidatePollSubmit(pollResponseDto, options);
+        
         _context.PollResponses.Add(new PollResponse
         {
             PollId = pollResponseDto.PollId,

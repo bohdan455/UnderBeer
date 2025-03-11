@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using UnderBeerPolls.DataLayer;
 using UnderBeerPolls.DataLayer.DbModels;
+using UnderBeerPolls.Services.Exceptions;
 using UnderBeerPolls.Services.Services.Interfaces;
 
 namespace UnderBeerPolls.Services.Services;
@@ -21,33 +22,26 @@ public class AuthService : IAuthService
         _context = context;
     }
     
-    public async Task<bool> Register(string username, string password)
+    public async Task Register(string username, string password)
     {
         if (await _context.Users.AnyAsync(x => x.Username == username))
         {
-            return false;
+            throw new UserAlreadyExistsException();
         }
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
         _context.Add(new User(username, hashedPassword));
         
         await _context.SaveChangesAsync();
-        return true;
     }
 
     public async Task<string> Login(string username, string password)
     {
         var user = await _context.Users.FirstOrDefaultAsync(x => x.Username == username);
-
-        if (user == null)
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            return string.Empty;
+            throw new FailedLoginAttemptException();
         }
-
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-        {
-            return string.Empty;
-        }
-
+        
         return GenerateJwtToken(username);
     }
     

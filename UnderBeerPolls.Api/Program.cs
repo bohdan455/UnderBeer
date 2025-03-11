@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using UnderBeerPolls.Api.Middlewares;
 using UnderBeerPolls.Api.Scalar;
 using UnderBeerPolls.DataLayer;
 using UnderBeerPolls.Services.Services;
@@ -17,6 +18,7 @@ builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<Be
 
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IPollService, PollService>();
+builder.Services.AddTransient<IValidationService, ValidationService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -38,7 +40,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseNpgsql(builder.Con
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
+app.UseMiddleware<ExceptionMiddleware>();
 app.MapOpenApi();
 app.MapScalarApiReference();
 

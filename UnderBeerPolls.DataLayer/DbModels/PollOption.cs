@@ -15,4 +15,6 @@ public class PollOption
     public PollType Type { get; set; }
 
     public List<string>? Options  { get; set; } = [];
+
+    public Guid PollId { get; set; }
 }

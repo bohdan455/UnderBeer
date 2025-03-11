@@ -22,11 +22,11 @@ public class AuthController : ControllerBase
         return string.IsNullOrEmpty(result) ? BadRequest() : Ok(result);
     }
 
-    [HttpPost]
+    [HttpPost("register")]
     public async Task<IActionResult> Register(AuthModel authModel)
     {
-        var result = await _authService.Register(authModel.Username, authModel.Password);
+        await _authService.Register(authModel.Username, authModel.Password);
 
-        return result ? Ok() : BadRequest();
+        return Ok();
     }
 }

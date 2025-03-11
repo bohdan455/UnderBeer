@@ -15,4 +15,8 @@
       <ProjectReference Include="..\UnderBeerPolls.DataLayer\UnderBeerPolls.DataLayer.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Helpers\" />
+    </ItemGroup>
+
 </Project>
