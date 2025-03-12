@@ -26,12 +26,13 @@ public class PollService : IPollService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Poll> GetPollFullInformationForCreator(Guid pollId)
+    public async Task<Poll> GetPollFullInformationForCreator(string username, Guid pollId)
     {
         var poll = await _context.Polls
             .Include(x => x.Options)
             .Include(x => x.Responses).ThenInclude(x => x.PollOptionResponses).ThenInclude(x => x.PollOption)
-            .FirstOrDefaultAsync(x => x.Id == pollId);
+            .Include(x => x.CreatedBy)
+            .FirstOrDefaultAsync(x => x.Id == pollId && x.CreatedBy.Username == username);
 
         if (poll == null)
         {

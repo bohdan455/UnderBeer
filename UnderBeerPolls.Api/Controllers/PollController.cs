@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UnderBeerPolls.Api.Extensions;
 using UnderBeerPolls.Api.Models;
 using UnderBeerPolls.Services.Dtos;
 using UnderBeerPolls.Services.Services.Interfaces;
@@ -21,12 +22,12 @@ public class PollController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetAllPolls()
     {
-        var polls = await _pollService.GetAllPollsForUser(User.Claims.First(x => x.Type == "name").Value);
+        var polls = await _pollService.GetAllPollsForUser(User.GetUsername());
 
         return Ok(polls);
     }
 
-    [HttpGet("user/{id}")]
+    [HttpGet("user/{id:guid}")]
     public async Task<IActionResult> GetPollFullInformationForUser([FromRoute] Guid id)
     {
         var poll = await _pollService.GetPollFullInformationForUser(id);
@@ -35,11 +36,10 @@ public class PollController : ControllerBase
     }
     
     [Authorize]
-    // TODO check if creator is really a creator of poll
-    [HttpGet("creator/{id}")]
+    [HttpGet("creator/{id:guid}")]
     public async Task<IActionResult> GetPollFullInformationForCreator([FromRoute] Guid id)
     {
-        var poll = await _pollService.GetPollFullInformationForCreator(id);
+        var poll = await _pollService.GetPollFullInformationForCreator(User.GetUsername(), id);
 
         return Ok(poll);
     }
@@ -48,7 +48,7 @@ public class PollController : ControllerBase
     [Authorize]
     public async Task<IActionResult> CreateNewPoll([FromBody] NewPollModel pollModel)
     {
-        await _pollService.CreatePoll(User.Claims.First(x => x.Type == "name").Value, pollModel.ToPollModel());
+        await _pollService.CreatePoll(User.GetUsername(), pollModel.ToPollModel());
 
         return Ok();
     }

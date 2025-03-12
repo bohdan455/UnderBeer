@@ -7,7 +7,7 @@ public interface IPollService
 {
     Task CreatePoll(string username, Poll newPoll);
 
-    Task<Poll> GetPollFullInformationForCreator(Guid pollId);
+    Task<Poll> GetPollFullInformationForCreator(string username, Guid pollId);
     
     Task<PollForUserInformationDto> GetPollFullInformationForUser(Guid pollId);
     
