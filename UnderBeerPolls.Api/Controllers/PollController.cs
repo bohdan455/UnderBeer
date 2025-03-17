@@ -12,10 +12,12 @@ namespace UnderBeerPolls.Api.Controllers;
 public class PollController : ControllerBase
 {
     private readonly IPollService _pollService;
+    private readonly ILogger<PollController> _logger;
 
-    public PollController(IPollService pollService)
+    public PollController(IPollService pollService, ILogger<PollController> logger)
     {
         _pollService = pollService;
+        _logger = logger;
     }
     
     [HttpGet]
@@ -49,7 +51,7 @@ public class PollController : ControllerBase
     public async Task<IActionResult> CreateNewPoll([FromBody] NewPollModel pollModel)
     {
         await _pollService.CreatePoll(User.GetUsername(), pollModel.ToPollModel());
-
+        _logger.LogInformation("New poll created {@poll}", pollModel);
         return Ok();
     }
 
@@ -57,7 +59,7 @@ public class PollController : ControllerBase
     public async Task<IActionResult> SubmitPoll([FromBody] PollResponseModel pollResponseModel)
     {
         await _pollService.SubmitPoll(pollResponseModel.ToResponseDto());
-
+        _logger.LogInformation("New poll submit {@pollSubmit}", pollResponseModel);
         return Ok();
     }
 }

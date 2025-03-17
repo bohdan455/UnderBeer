@@ -65,7 +65,6 @@ public class PollService : IPollService
     public async Task<List<PollShortInformationDto>> GetAllPollsForUser(string username)
     {
         var polls = await _context.Polls
-            .Include(x => x.Options)
             .Include(x => x.Responses)
             .Include(x => x.CreatedBy)
             .Where(x => x.CreatedBy.Username == username)
@@ -79,8 +78,7 @@ public class PollService : IPollService
 
         return polls;
     }
-
-    // TODO Add validation that submitted value correspond to option type
+    
     public async Task<bool> SubmitPoll(PollResponseDto pollResponseDto)
     {
         var options = await _context.PollOptions

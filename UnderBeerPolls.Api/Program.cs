@@ -4,7 +4,11 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
+using Serilog;
 using UnderBeerPolls.Api.Middlewares;
 using UnderBeerPolls.Api.Scalar;
 using UnderBeerPolls.DataLayer;
@@ -15,6 +19,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
+// builder.Services
+//     .AddOpenTelemetry()
+//     .ConfigureResource(resource => resource.AddService("PollApi"))
+//     .WithTracing(tracing =>
+//     {
+//         tracing
+//             .AddAspNetCoreInstrumentation()
+//             .AddHttpClientInstrumentation()
+//             .AddEntityFrameworkCoreInstrumentation()
+//             .AddNpgsql();
+//
+//         tracing.AddOtlpExporter();
+//     });
+
+builder.Host.UseSerilog((context, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IPollService, PollService>();
@@ -40,6 +60,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseNpgsql(builder.Con
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
 app.MapOpenApi();
 app.MapScalarApiReference();
