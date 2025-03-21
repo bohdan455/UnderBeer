@@ -60,6 +60,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseNpgsql(builder.Con
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
+    context.Database.EnsureCreated();
+}
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
 app.MapOpenApi();
