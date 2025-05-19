@@ -4,11 +4,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Npgsql;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
-using Serilog;
 using UnderBeerPolls.Api.Middlewares;
 using UnderBeerPolls.Api.Scalar;
 using UnderBeerPolls.DataLayer;
@@ -19,22 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
-// builder.Services
-//     .AddOpenTelemetry()
-//     .ConfigureResource(resource => resource.AddService("PollApi"))
-//     .WithTracing(tracing =>
-//     {
-//         tracing
-//             .AddAspNetCoreInstrumentation()
-//             .AddHttpClientInstrumentation()
-//             .AddEntityFrameworkCoreInstrumentation()
-//             .AddNpgsql();
-//
-//         tracing.AddOtlpExporter();
-//     });
-
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IPollService, PollService>();
@@ -54,6 +34,15 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -65,8 +54,8 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
     context.Database.EnsureCreated();
 }
-app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors();
 app.MapOpenApi();
 app.MapScalarApiReference();
 
